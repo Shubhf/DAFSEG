@@ -1,27 +1,27 @@
 # ╔══════════════════════════════════════════════════════╗
-# ║         CVPR FUSION — Path Configuration             ║
+# ║      Dual ResNet -- Path Configuration               ║
 # ╚══════════════════════════════════════════════════════╝
 # Edit these paths to match your local / server setup.
 
 dataset:
-  bright: "C:/Users/Debabrata/Desktop/Bright/BRIGHT/Bright_CVPR_dataset"
-  crisis: null
-  ood: null
+  pre_event:  "C:/Users/Debabrata/Desktop/BRIGHT_updated/pre-event"
+  post_event: "C:/Users/Debabrata/Desktop/BRIGHT_updated/post-event"
+  target:     "C:/Users/Debabrata/Desktop/BRIGHT_updated/target"
+  splits:     "C:/Users/Debabrata/Desktop/BRIGHT_updated/standard_ML"
 
 checkpoints:
-  save_dir: "./checkpoints"
-  best: "best_model.pth"
-  best_ema: "best_ema_model.pth"
-  last: "last_model.pth"
+  save_dir:  "./checkpoints"
+  best:      "best_model.pth"
+  last:      "last_model.pth"
 
 logs:
-  dir: "./logs"
-  tensorboard: "./logs/tensorboard"
-  wandb_project: "cvpr-fusion"
+  dir:             "./logs"
+  tensorboard:     "./logs/tensorboard"
+  wandb_project:   "dual-resnet-bright"
 
 results:
-  dir: "./results"
-  metrics_json: "metrics.json"
-  confusion_matrix: "confusion_matrix.png"
-  roc_curve: "roc_curve.png"
-  reliability_diagram: "reliability_diagram.png"
+  dir:               "./results"
+  metrics_json:      "metrics.json"
+  confusion_matrix:  "confusion_matrix.png"
+  per_class_iou:     "per_class_iou.png"
+  training_curves:   "training_curves.png"
