@@ -1,0 +1,24 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║   Experiment: ResNet-50 + ViT-B/16  (Mixed Stems)   ║
+# ╚══════════════════════════════════════════════════════╝
+_base_: base_config.yaml
+
+model:
+  stems:
+    - resnet50
+    - vit_b16
+  fusion: concat_delta_prod
+  proj_dim: 512
+  domain_film_dim: 64
+  dropout: 0.2
+
+train:
+  epochs: 50
+  lr: 1.0e-4
+  lr_resnet_mult: 0.1
+  lr_vit_mult: 0.05
+  scheduler: cosine               # cosine recommended for mixed stems
+  patience: 10
+
+output:
+  root_dir: "./runs_resnet_vit_mixed"

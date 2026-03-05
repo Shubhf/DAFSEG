@@ -1,0 +1,99 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║         CVPR FUSION — Base Configuration             ║
+# ╚══════════════════════════════════════════════════════╝
+# All other configs inherit / override from this file.
+
+# ── Data ─────────────────────────────────────────────────────────────────────
+data:
+  bright_dir: "C:/Users/Debabrata/Desktop/Bright/BRIGHT/Bright_CVPR_dataset"
+  crisis_dir: null
+  ood_dir: null
+  classes:
+    - minor
+    - moderate
+    - severe
+  class_to_idx:
+    minor: 0
+    moderate: 1
+    severe: 2
+  num_classes: 3
+  num_domains: 2
+  img_size: 512
+  use_subset: false
+  train_ratio: 0.70
+  val_ratio: 0.15
+  test_ratio: 0.15
+  seed: 42
+
+# ── DataLoader ────────────────────────────────────────────────────────────────
+loader:
+  batch_size: 8
+  num_workers: 0          # set >0 on Linux; keep 0 on Windows
+  pin_memory: true
+
+# ── Augmentation ─────────────────────────────────────────────────────────────
+augmentation:
+  weak:
+    horizontal_flip_p: 0.5
+    brightness: 0.1
+    contrast: 0.1
+  strong:
+    horizontal_flip_p: 0.5
+    brightness: 0.3
+    contrast: 0.3
+    rotation_degrees: 15
+    jpeg_quality: 70
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+model:
+  stems:
+    - vit_b16
+    - vit_b16
+  fusion: concat_delta_prod      # concat_mlp | concat_delta_prod | concat_delta_prod_xattn
+  proj_dim: 512
+  domain_film_dim: 64
+  dropout: 0.2
+
+# ── Optimisation ─────────────────────────────────────────────────────────────
+train:
+  epochs: 50
+  lr: 1.0e-4
+  lr_vit_mult: 0.05
+  lr_resnet_mult: 0.1
+  weight_decay: 1.0e-4
+  grad_clip: 1.0
+  scheduler: plateau             # onecycle | cosine | plateau
+  pct_start: 0.2                 # used only with onecycle
+  patience: 10                   # early stopping patience
+  progressive_unfreeze_every: 0  # 0 = disabled
+
+# ── EMA ───────────────────────────────────────────────────────────────────────
+ema:
+  enabled: true
+  decay: 0.999
+
+# ── Loss ─────────────────────────────────────────────────────────────────────
+loss:
+  type: focal                    # ce | lsce | focal
+  label_smoothing: 0.1           # used only with lsce
+  focal_gamma: 2.0
+  use_consistency: true
+  consistency_lambda: 0.5
+
+# ── Calibration ───────────────────────────────────────────────────────────────
+calibration:
+  enabled: true
+  method: temperature_scaling
+  n_bins: 15                     # ECE / MCE bins
+
+# ── Numerics ──────────────────────────────────────────────────────────────────
+numerics:
+  amp_eval_off: true             # disable AMP in eval (avoids fp16 overflow)
+  eps: 1.0e-6
+
+# ── Output ────────────────────────────────────────────────────────────────────
+output:
+  root_dir: "./runs_dualstem_fusion"
+  save_best: true
+  save_best_ema: true
+  save_last: true

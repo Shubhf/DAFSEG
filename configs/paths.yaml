@@ -1,0 +1,27 @@
+# ╔══════════════════════════════════════════════════════╗
+# ║         CVPR FUSION — Path Configuration             ║
+# ╚══════════════════════════════════════════════════════╝
+# Edit these paths to match your local / server setup.
+
+dataset:
+  bright: "C:/Users/Debabrata/Desktop/Bright/BRIGHT/Bright_CVPR_dataset"
+  crisis: null
+  ood: null
+
+checkpoints:
+  save_dir: "./checkpoints"
+  best: "best_model.pth"
+  best_ema: "best_ema_model.pth"
+  last: "last_model.pth"
+
+logs:
+  dir: "./logs"
+  tensorboard: "./logs/tensorboard"
+  wandb_project: "cvpr-fusion"
+
+results:
+  dir: "./results"
+  metrics_json: "metrics.json"
+  confusion_matrix: "confusion_matrix.png"
+  roc_curve: "roc_curve.png"
+  reliability_diagram: "reliability_diagram.png"
