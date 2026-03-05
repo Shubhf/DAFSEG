@@ -1,0 +1,30 @@
+
+experiment_default
+# ╔══════════════════════════════════════════════════════╗
+# ║   Experiment: Default Full Run  (Primary)            ║
+# ╚══════════════════════════════════════════════════════╝
+# Inherits base_config.yaml -- only overrides listed.
+
+_base_: base_config.yaml
+
+train:
+  epochs: 40
+  lr: 1.0e-4
+  scheduler: cosine
+
+loss:
+  focal_gamma: 2.5
+  beta: 0.9999
+
+loader:
+  batch_size: 16
+
+output:
+  root_dir: "./runs_dual_resnet_default"
+
+# Results achieved:
+#   Best mIoU     : 63.17%
+#   Overall Acc   : 93.85%
+#   Best epoch    : ~40
+#   Train loss    : 0.0156  (final)
+#   Val   loss    : 0.0966  (best)
