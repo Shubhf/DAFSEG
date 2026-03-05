@@ -1,99 +1,116 @@
 # ╔══════════════════════════════════════════════════════╗
-# ║         CVPR FUSION — Base Configuration             ║
+# ║      Dual ResNet -- Base Configuration               ║
 # ╚══════════════════════════════════════════════════════╝
 # All other configs inherit / override from this file.
 
 # ── Data ─────────────────────────────────────────────────────────────────────
 data:
-  bright_dir: "C:/Users/Debabrata/Desktop/Bright/BRIGHT/Bright_CVPR_dataset"
-  crisis_dir: null
-  ood_dir: null
-  classes:
-    - minor
-    - moderate
-    - severe
-  class_to_idx:
-    minor: 0
-    moderate: 1
-    severe: 2
-  num_classes: 3
-  num_domains: 2
-  img_size: 512
-  use_subset: false
-  train_ratio: 0.70
-  val_ratio: 0.15
-  test_ratio: 0.15
-  seed: 42
+  pre_event_dir:  "<PATH>/pre-event"
+  post_event_dir: "<PATH>/post-event"
+  target_dir:     "<PATH>/target"
+  split_dir:      "<PATH>/standard_ML"
+  train_split:    "train_set.txt"
+  val_split:      "val_set.txt"
+  test_split:     "test_set.txt"
+  image_size: 512
+  num_classes: 4
+  class_names:
+    - Background
+    - Intact
+    - Damaged
+    - Destroyed
+  class_abbrev:
+    - BG
+    - INT
+    - DAM
+    - DES
+  # Pixel distribution (from full dataset scan)
+  class_distribution:
+    Background : 85.3
+    Intact     : 11.8
+    Damaged    :  1.5
+    Destroyed  :  1.4
 
 # ── DataLoader ────────────────────────────────────────────────────────────────
 loader:
-  batch_size: 8
+  batch_size: 16
   num_workers: 0          # set >0 on Linux; keep 0 on Windows
   pin_memory: true
+  drop_last: true         # avoids BatchNorm instability on batch_size=1
 
 # ── Augmentation ─────────────────────────────────────────────────────────────
 augmentation:
-  weak:
-    horizontal_flip_p: 0.5
-    brightness: 0.1
-    contrast: 0.1
-  strong:
-    horizontal_flip_p: 0.5
-    brightness: 0.3
-    contrast: 0.3
-    rotation_degrees: 15
-    jpeg_quality: 70
+  resize: 512
+  normalize:
+    mean: [0.485, 0.456, 0.406]
+    std:  [0.229, 0.224, 0.225]
 
 # ── Model ─────────────────────────────────────────────────────────────────────
 model:
-  stems:
-    - vit_b16
-    - vit_b16
-  fusion: concat_delta_prod      # concat_mlp | concat_delta_prod | concat_delta_prod_xattn
-  proj_dim: 512
-  domain_film_dim: 64
-  dropout: 0.2
+  name: ExactDualStreamNetwork
+  encoder: resnet50                    # backbone for both streams
+  encoder_weights: IMAGENET1K_V1
+  decoder: deeplabv3                   # ASPP-based decoder
+  decoder_weights: COCO_WITH_VOC_LABELS_V1
+  fusion: best_fusion_selector         # concat | subtract | attention -> selector
+  fusion_channels: 2048
+  num_classes: 4
+  total_params: 255_047_658
 
 # ── Optimisation ─────────────────────────────────────────────────────────────
 train:
-  epochs: 50
+  epochs: 40
   lr: 1.0e-4
-  lr_vit_mult: 0.05
-  lr_resnet_mult: 0.1
   weight_decay: 1.0e-4
   grad_clip: 1.0
-  scheduler: plateau             # onecycle | cosine | plateau
-  pct_start: 0.2                 # used only with onecycle
-  patience: 10                   # early stopping patience
-  progressive_unfreeze_every: 0  # 0 = disabled
-
-# ── EMA ───────────────────────────────────────────────────────────────────────
-ema:
-  enabled: true
-  decay: 0.999
+  scheduler: cosine                    # CosineAnnealingLR
+  cosine_T_max: 40
+  seed: 42
 
 # ── Loss ─────────────────────────────────────────────────────────────────────
 loss:
-  type: focal                    # ce | lsce | focal
-  label_smoothing: 0.1           # used only with lsce
-  focal_gamma: 2.0
-  use_consistency: true
-  consistency_lambda: 0.5
+  type: focal                          # Focal Loss
+  focal_gamma: 2.5
+  class_weight_method: effective_num   # beta-based effective number weighting
+  beta: 0.9999
+  manual_boosts:
+    Damaged:   2.0                     # most under-represented fine-grained class
+    Destroyed: 1.5
+  weight_clamp_min: 0.1
+  weight_clamp_max: 20.0
+  weight_batches: 25                   # batches used to estimate class counts
 
-# ── Calibration ───────────────────────────────────────────────────────────────
-calibration:
-  enabled: true
-  method: temperature_scaling
-  n_bins: 15                     # ECE / MCE bins
+# ── Evaluation Metrics ────────────────────────────────────────────────────────
+metrics:
+  per_class:
+    - IoU
+    - Precision
+    - Recall
+    - F1
+    - TP
+    - FP
+    - FN
+    - TN
+    - Support
+  aggregate:
+    - mIoU
+    - overall_accuracy
+    - macro_precision
+    - macro_recall
+    - macro_f1
+    - weighted_precision
+    - weighted_recall
+    - weighted_f1
 
-# ── Numerics ──────────────────────────────────────────────────────────────────
-numerics:
-  amp_eval_off: true             # disable AMP in eval (avoids fp16 overflow)
-  eps: 1.0e-6
+# ── Checkpointing ─────────────────────────────────────────────────────────────
+checkpoint:
+  save_dir: "./checkpoints"
+  best: "best_model.pth"
+  last: "last_model.pth"
+  monitor: mIoU                        # metric to track for best checkpoint
+  mode: max
 
 # ── Output ────────────────────────────────────────────────────────────────────
 output:
-  root_dir: "./runs_dualstem_fusion"
-  save_best: true
-  save_best_ema: true
-  save_last: true
+  root_dir: "./runs_dual_resnet"
+  log_interval: 1                      # print metrics every N epochs
